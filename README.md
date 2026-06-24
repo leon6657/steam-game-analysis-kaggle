@@ -11,20 +11,20 @@
 
 ### 1. 克隆项目
 
-`ash
+`ash
 git clone https://github.com/leon6657/steam-game-analysis-kaggle.git
 cd steam-game-analysis-kaggle
 `
 
 ### 2. 安装依赖
 
-`ash
+`ash
 pip install pandas numpy flask plotly
 `
 
 ### 3. 运行
 
-`ash
+`ash
 python run_server.py
 `
 
@@ -32,7 +32,7 @@ python run_server.py
 
 ### 4. 重新生成数据库（可选）
 
-`ash
+`ash
 # 删除数据库后重启，会自动重建
 Remove-Item data/processed/steam.db
 python run_server.py
