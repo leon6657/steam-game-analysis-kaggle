@@ -1,0 +1,77 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="d-flex justify-content-between align-items-center mb-3">
+     <h4 class="mb-0">价格分析</h4>
+     <small class="text-muted">价格分布、免费 vs 付费对比、价格与好评率关系</small>
+ </div>
+ 
+ <div class="row g-3">
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">价格区间分布</div>
+             <div class="chart-container" id="chart-price-dist"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">免费 vs 付费游戏占比</div>
+             <div class="chart-container" id="chart-free-paid"></div>
+         </div>
+     </div>
+     <div class="col-md-12">
+         <div class="chart-card">
+             <div class="chart-title">价格 vs 好评率</div>
+             <div class="chart-container" id="chart-price-rating"></div>
+         </div>
+     </div>
+     <div class="col-md-12">
+         <div class="chart-card">
+             <div class="chart-title">价格区间综合分析表</div>
+             <div class="table-responsive">
+                 <table class="table table-sm table-hover game-table mb-0">
+                     <thead>
+                         <tr>
+                             <th>价格区间</th>
+                             <th>游戏数量</th>
+                             <th>平均好评率</th>
+                             <th>平均拥有者数</th>
+                         </tr>
+                     </thead>
+                     <tbody id="price-table-body">
+                         <tr><td colspan="4" class="text-center text-muted py-4">加载中...</td></tr>
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script>
+     Promise.all([
+         fetch('/api/price').then(function(r) { return r.json(); }),
+         fetch('/api/charts').then(function(r) { return r.json(); })
+     ]).then(function(responses) {
+         var priceData = responses[0].data;
+         var charts = responses[1].data;
+ 
+         renderChart('chart-price-dist', charts.price.price_dist);
+         renderChart('chart-free-paid', charts.price.free_vs_paid);
+         renderChart('chart-price-rating', charts.price.price_rating_scatter);
+ 
+         // 价格区间表
+         var tbody = document.getElementById('price-table-body');
+         var html = '';
+         priceData.price_distribution.forEach(function(p) {
+             html += '<tr>';
+             html += '<td><strong>' + p.range + '</strong></td>';
+             html += '<td>' + p.count.toLocaleString() + '</td>';
+             html += '<td>' + (p.avg_rating_score ? p.avg_rating_score.toFixed(1) : '-') + '%</td>';
+             html += '<td>' + (p.avg_owners ? Math.round(p.avg_owners).toLocaleString() : '-') + '</td>';
+             html += '</tr>';
+         });
+         tbody.innerHTML = html;
+     }).catch(function(err) { console.error(err); });
+ </script>
+ {% endblock %}

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Data files (可选的，提交数据集也没问题)
+# data/raw/*.csv
+# data/processed/*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# 临时文件
+run.bat
+check_*.py
+fix_*.py

@@ -1,0 +1,183 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="d-flex justify-content-between align-items-center mb-3">
+     <h4 class="mb-0">游戏探索</h4>
+     <small class="text-muted" id="result-count">加载中...</small>
+ </div>
+ 
+ <!-- 筛选条件 -->
+ <div class="filter-panel">
+     <div class="row g-2 align-items-end">
+         <div class="col-md-4">
+             <label class="form-label small">搜索游戏名</label>
+             <input type="text" class="form-control form-control-sm" id="search-input" placeholder="输入游戏名...">
+         </div>
+         <div class="col-md-3">
+             <label class="form-label small">类型筛选</label>
+             <select class="form-select form-select-sm" id="genre-select">
+                 <option value="">全部类型</option>
+             </select>
+         </div>
+         <div class="col-md-2">
+             <label class="form-label small">最低价格</label>
+             <input type="number" class="form-control form-control-sm" id="price-min" min="0" step="0.99" placeholder="$0">
+         </div>
+         <div class="col-md-2">
+             <label class="form-label small">最高价格</label>
+             <input type="number" class="form-control form-control-sm" id="price-max" min="0" step="0.99" placeholder="$∞">
+         </div>
+         <div class="col-md-1">
+             <button class="btn btn-primary btn-sm w-100" id="search-btn">搜索</button>
+         </div>
+     </div>
+ </div>
+ 
+ <!-- 游戏表格 -->
+ <div class="chart-card p-0" style="max-height: 65vh; overflow-y: auto;">
+     <table class="table table-hover game-table mb-0">
+         <thead>
+             <tr>
+                 <th>名称</th>
+                 <th>价格</th>
+                 <th>好评率</th>
+                 <th>类型</th>
+                 <th>开发商</th>
+                 <th>游玩时长</th>
+                 <th>发行日期</th>
+             </tr>
+         </thead>
+         <tbody id="game-table-body">
+             <tr><td colspan="7" class="text-center text-muted py-4">加载中...</td></tr>
+         </tbody>
+     </table>
+ </div>
+ 
+ <!-- 分页 -->
+ <div class="d-flex justify-content-between align-items-center mt-2">
+     <div class="pagination-info" id="pagination-info"></div>
+     <nav>
+         <ul class="pagination pagination-sm mb-0" id="pagination-controls"></ul>
+     </nav>
+ </div>
+ 
+ <!-- 详情弹窗 -->
+ <div class="modal fade" id="detailModal" tabindex="-1">
+     <div class="modal-dialog modal-lg">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="detail-name"></h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+             </div>
+             <div class="modal-body" id="detail-body"></div>
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script>
+     var currentPage = 1;
+ 
+     function loadGenreList() {
+         fetch('/api/genre_list').then(function(r) { return r.json(); }).then(function(res) {
+             if (!res.success) return;
+             var sel = document.getElementById('genre-select');
+             res.data.forEach(function(g) {
+                 var opt = document.createElement('option');
+                 opt.value = g; opt.textContent = g;
+                 sel.appendChild(opt);
+             });
+         });
+     }
+ 
+     function loadGames(page) {
+         page = page || 1;
+         var params = new URLSearchParams();
+         params.set('page', page);
+         params.set('per_page', 50);
+         var search = document.getElementById('search-input').value.trim();
+         if (search) params.set('search', search);
+         var genre = document.getElementById('genre-select').value;
+         if (genre) params.set('genre', genre);
+         var pmin = document.getElementById('price-min').value;
+         if (pmin) params.set('price_min', pmin);
+         var pmax = document.getElementById('price-max').value;
+         if (pmax) params.set('price_max', pmax);
+ 
+         fetch('/api/games?' + params.toString()).then(function(r) { return r.json(); }).then(function(res) {
+             if (!res.success) return;
+             var data = res.data;
+             var tbody = document.getElementById('game-table-body');
+             document.getElementById('result-count').textContent = '共 ' + data.total + ' 款游戏';
+ 
+             if (data.records.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">未找到匹配游戏</td></tr>';
+                 document.getElementById('pagination-controls').innerHTML = '';
+                 document.getElementById('pagination-info').textContent = '';
+                 return;
+             }
+ 
+             var html = '';
+             data.records.forEach(function(g) {
+                 var totalR = (g.positive_ratings || 0) + (g.negative_ratings || 0);
+                 var posPct = totalR > 0 ? Math.round(g.positive_ratings / totalR * 100) : 0;
+                 var genres = '';
+                 try { var parsed = JSON.parse(g.genres); genres = parsed.join(', '); } catch(e) { genres = g.genres || ''; }
+                 html += '<tr onclick="showDetail(' + g.app_id + ')">';
+                 html += '<td><strong>' + (g.name || '') + '</strong></td>';
+                 html += '<td>' + (g.price === 0 ? '免费' : '$' + g.price.toFixed(2)) + '</td>';
+                 html += '<td><div class="d-flex align-items-center gap-2"><span>' + posPct + '%</span><div class="rating-bar flex-grow-1"><div class="fill" style="width:' + posPct + '%"></div></div></div></td>';
+                 html += '<td>' + genres + '</td>';
+                 html += '<td>' + (g.developer || '') + '</td>';
+                 html += '<td>' + (g.average_playtime || 0).toLocaleString() + ' min</td>';
+                 html += '<td>' + (g.release_date || '') + '</td>';
+                 html += '</tr>';
+             });
+             tbody.innerHTML = html;
+ 
+             // 分页
+             currentPage = data.page;
+             var info = document.getElementById('pagination-info');
+             info.textContent = '第 ' + data.page + '/' + data.total_pages + ' 页';
+             var controls = document.getElementById('pagination-controls');
+             var phtml = '';
+             phtml += '<li class="page-item' + (data.page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" onclick="loadGames(' + (data.page - 1) + '); return false;">上一页</a></li>';
+             phtml += '<li class="page-item' + (data.page >= data.total_pages ? ' disabled' : '') + '"><a class="page-link" href="#" onclick="loadGames(' + (data.page + 1) + '); return false;">下一页</a></li>';
+             controls.innerHTML = phtml;
+         });
+     }
+ 
+     function showDetail(appId) {
+         fetch('/api/games/' + appId).then(function(r) { return r.json(); }).then(function(res) {
+             if (!res.success) return;
+             var g = res.data;
+             document.getElementById('detail-name').textContent = g.name;
+             var totalR = (g.positive_ratings || 0) + (g.negative_ratings || 0);
+             var posPct = totalR > 0 ? Math.round(g.positive_ratings / totalR * 100) : 0;
+             var genres = '';
+             try { genres = JSON.parse(g.genres).join(', '); } catch(e) { genres = g.genres || ''; }
+ 
+             document.getElementById('detail-body').innerHTML = '<div class="row g-3">' +
+                 '<div class="col-6"><div class="detail-label">价格</div><div class="detail-value">' + (g.price === 0 ? '免费' : '$' + g.price.toFixed(2)) + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">好评率</div><div class="detail-value">' + posPct + '% (' + g.positive_ratings.toLocaleString() + ' 好评 / ' + g.negative_ratings.toLocaleString() + ' 差评)</div></div>' +
+                 '<div class="col-6"><div class="detail-label">开发商</div><div class="detail-value">' + (g.developer || '-') + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">发行商</div><div class="detail-value">' + (g.publisher || '-') + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">类型</div><div class="detail-value">' + genres + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">平台</div><div class="detail-value">' + (g.platforms || '-') + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">平均游玩时长</div><div class="detail-value">' + (g.average_playtime || 0).toLocaleString() + ' 分钟</div></div>' +
+                 '<div class="col-6"><div class="detail-label">拥有者估算</div><div class="detail-value">' + (g.owners || 0).toLocaleString() + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">Metacritic</div><div class="detail-value">' + (g.metacritic_score || '-') + '</div></div>' +
+                 '<div class="col-6"><div class="detail-label">发行日期</div><div class="detail-value">' + (g.release_date || '-') + '</div></div>' +
+                 '</div>';
+             var modal = new bootstrap.Modal(document.getElementById('detailModal'));
+             modal.show();
+         });
+     }
+ 
+     document.getElementById('search-btn').addEventListener('click', function() { loadGames(1); });
+     document.getElementById('search-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') loadGames(1); });
+ 
+     loadGenreList();
+     loadGames(1);
+ </script>
+ {% endblock %}

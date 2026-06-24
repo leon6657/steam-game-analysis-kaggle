@@ -1,0 +1,118 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="welcome-section">
+     <div class="d-flex justify-content-between align-items-center">
+         <div>
+             <h1>Steam 游戏市场数据分析</h1>
+             <p>基于 Steam 平台游戏数据的全维度分析：涵盖价格、类型、评价、开发商与发行趋势</p>
+         </div>
+         <span class="badge bg-light text-dark fs-6" id="total-badge">加载中...</span>
+     </div>
+ </div>
+ 
+ <!-- KPI 卡片 -->
+ <div class="row g-3 mb-4" id="kpi-row">
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-total">-</div>
+             <div class="kpi-label">游戏总数</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-avg-price">-</div>
+             <div class="kpi-label">平均价格</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-ratings">-</div>
+             <div class="kpi-label">总评价数</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-pos-rate">-</div>
+             <div class="kpi-label">综合好评率</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-free">-</div>
+             <div class="kpi-label">免费游戏</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-paid">-</div>
+             <div class="kpi-label">付费游戏</div>
+         </div>
+     </div>
+     <div class="col-6 col-md-3">
+         <div class="kpi-card">
+             <div class="kpi-value" id="kpi-avg-playtime">-</div>
+             <div class="kpi-label">平均游玩时长(分钟)</div>
+         </div>
+     </div>
+ </div>
+ 
+ <!-- 图表区 -->
+ <div class="row g-3">
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">游戏类型分布</div>
+             <div class="chart-container" id="chart-genre-pie"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">每年游戏发行量</div>
+             <div class="chart-container" id="chart-yearly-releases"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">好评率分布</div>
+             <div class="chart-container" id="chart-rating-dist"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">特征相关性热力图</div>
+             <div class="chart-container" id="chart-correlation"></div>
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script>
+     Promise.all([
+         fetch('/api/overview').then(r => r.json()),
+         fetch('/api/charts').then(r => r.json()),
+         fetch('/api/ratings').then(r => r.json())
+     ]).then(function(responses) {
+         var overview = responses[0].data;
+         var charts = responses[1].data;
+         var rating = responses[2].data;
+ 
+         // KPI
+         document.getElementById('kpi-total').textContent = overview.total_games.toLocaleString();
+         document.getElementById('kpi-avg-price').textContent = '$' + overview.avg_price;
+         document.getElementById('kpi-ratings').textContent = overview.total_ratings.toLocaleString();
+         document.getElementById('kpi-pos-rate').textContent = overview.overall_pos_rate + '%';
+         document.getElementById('kpi-free').textContent = overview.free_games.toLocaleString();
+         document.getElementById('kpi-paid').textContent = overview.paid_games.toLocaleString();
+         document.getElementById('kpi-avg-playtime').textContent = Math.round(overview.avg_playtime).toLocaleString();
+         document.getElementById('total-badge').textContent = overview.total_games.toLocaleString() + ' 款游戏';
+ 
+         // 图表
+         renderChart('chart-genre-pie', charts.overview.genre_pie);
+         renderChart('chart-yearly-releases', charts.overview.yearly_releases);
+         renderChart('chart-rating-dist', charts.rating.rating_dist);
+         renderChart('chart-correlation', charts.rating.correlation_heatmap);
+     }).catch(function(err) {
+         console.error('加载数据失败:', err);
+     });
+ </script>
+ {% endblock %}

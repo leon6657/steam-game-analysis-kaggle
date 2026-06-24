@@ -1,0 +1,163 @@
+ /* Steam 游戏大数据分析平台 — 自定义样式 */
+ 
+ :root {
+     --steam-blue: #1b2838;
+     --steam-accent: #66c0f4;
+     --card-radius: 8px;
+ }
+ 
+ body {
+     background: #f5f6fa;
+     min-height: 100vh;
+     display: flex;
+     flex-direction: column;
+ }
+ 
+ main {
+     flex: 1;
+ }
+ 
+ .navbar-brand {
+     font-weight: 700;
+     letter-spacing: -0.5px;
+ }
+ 
+ .navbar-dark .nav-link.active {
+     color: var(--steam-accent) !important;
+     font-weight: 600;
+ }
+ 
+ /* KPI 卡片 */
+ .kpi-card {
+     background: #fff;
+     border-radius: var(--card-radius);
+     border-left: 4px solid var(--steam-accent);
+     padding: 1.25rem 1.5rem;
+     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+     transition: transform 0.15s ease;
+ }
+ .kpi-card:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+ }
+ .kpi-card .kpi-value {
+     font-size: 1.75rem;
+     font-weight: 700;
+     color: #1b2838;
+     line-height: 1.2;
+ }
+ .kpi-card .kpi-label {
+     font-size: 0.8rem;
+     text-transform: uppercase;
+     letter-spacing: 0.5px;
+     color: #6c757d;
+     margin-top: 0.25rem;
+ }
+ 
+ /* 图表容器 */
+ .chart-card {
+     background: #fff;
+     border-radius: var(--card-radius);
+     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+     padding: 1rem;
+     margin-bottom: 1.5rem;
+ }
+ .chart-card .chart-title {
+     font-size: 0.9rem;
+     font-weight: 600;
+     color: #495057;
+     margin-bottom: 0.75rem;
+     padding-bottom: 0.5rem;
+     border-bottom: 2px solid #f0f0f0;
+ }
+ .chart-container {
+     width: 100%;
+     min-height: 380px;
+ }
+ 
+ /* 游戏搜索表格 */
+ .game-table {
+     font-size: 0.875rem;
+ }
+ .game-table th {
+     background: #f8f9fa;
+     position: sticky;
+     top: 0;
+     z-index: 1;
+ }
+ .game-table .rating-bar {
+     height: 6px;
+     border-radius: 3px;
+     background: #e9ecef;
+     overflow: hidden;
+ }
+ .game-table .rating-bar .fill {
+     height: 100%;
+     border-radius: 3px;
+     background: linear-gradient(90deg, #4caf50, #8bc34a);
+ }
+ .game-table tbody tr:hover {
+     background: #f1f8ff;
+     cursor: pointer;
+ }
+ 
+ /* 筛选面板 */
+ .filter-panel {
+     background: #fff;
+     border-radius: var(--card-radius);
+     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+     padding: 1rem 1.25rem;
+     margin-bottom: 1rem;
+ }
+ 
+ /* 响应式调整 */
+ @media (max-width: 768px) {
+     .kpi-card .kpi-value {
+         font-size: 1.25rem;
+     }
+     .container-fluid {
+         padding-left: 0.75rem;
+         padding-right: 0.75rem;
+     }
+ }
+ 
+ /* 游戏详情弹窗 */
+ .detail-label {
+     font-size: 0.75rem;
+     color: #6c757d;
+     text-transform: uppercase;
+     letter-spacing: 0.3px;
+ }
+ .detail-value {
+     font-size: 1rem;
+     font-weight: 500;
+ }
+ 
+ /* 滚动条美化 */
+ ::-webkit-scrollbar { width: 6px; }
+ ::-webkit-scrollbar-track { background: transparent; }
+ ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+ ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+ 
+ /* 欢迎区域 */
+ .welcome-section {
+     background: linear-gradient(135deg, #1b2838 0%, #2a475e 100%);
+     color: #fff;
+     border-radius: var(--card-radius);
+     padding: 2rem 2.5rem;
+     margin-bottom: 2rem;
+ }
+ .welcome-section h1 {
+     font-weight: 700;
+     font-size: 1.75rem;
+ }
+ .welcome-section p {
+     opacity: 0.85;
+     margin-bottom: 0;
+ }
+ 
+ /* 分页控件 */
+ .pagination-info {
+     font-size: 0.85rem;
+     color: #6c757d;
+ }

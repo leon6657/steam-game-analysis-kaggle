@@ -1,0 +1,86 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="d-flex justify-content-between align-items-center mb-3">
+     <h4 class="mb-0">游戏类型分析</h4>
+     <small class="text-muted">基于 Steam 所有游戏的类型标签交叉分析</small>
+ </div>
+ 
+ <div class="row g-3">
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">类型游戏数量排行</div>
+             <div class="chart-container" id="chart-genre-stats"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">类型分布占比</div>
+             <div class="chart-container" id="chart-genre-pie"></div>
+         </div>
+     </div>
+     <div class="col-md-12">
+         <div class="chart-card">
+             <div class="chart-title">热门类型年度趋势 (Top 8)</div>
+             <div class="chart-container" id="chart-genre-trend"></div>
+         </div>
+     </div>
+     <div class="col-md-12">
+         <div class="chart-card">
+             <div class="chart-title">类型综合数据表</div>
+             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                 <table class="table table-sm table-hover game-table mb-0" id="genre-table">
+                     <thead>
+                         <tr>
+                             <th>类型</th>
+                             <th>游戏数量</th>
+                             <th>平均价格</th>
+                             <th>平均好评率</th>
+                             <th>平均拥有者数</th>
+                             <th>平均游玩时长</th>
+                         </tr>
+                     </thead>
+                     <tbody id="genre-table-body">
+                         <tr><td colspan="6" class="text-center text-muted py-4">加载中...</td></tr>
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script>
+     Promise.all([
+         fetch('/api/genres').then(function(r) { return r.json(); }),
+         fetch('/api/charts').then(function(r) { return r.json(); }),
+         fetch('/api/overview').then(function(r) { return r.json(); })
+     ]).then(function(responses) {
+         var genreData = responses[0].data;
+         var charts = responses[1].data;
+         var overview = responses[2].data;
+ 
+         // 图表
+         renderChart('chart-genre-stats', charts.genres.genre_stats);
+         renderChart('chart-genre-trend', charts.genres.genre_trend);
+ 
+         // 饼图用 overview 的类型数据
+         renderChart('chart-genre-pie', charts.overview.genre_pie);
+ 
+         // 表格
+         var tbody = document.getElementById('genre-table-body');
+         var html = '';
+         genreData.genre_stats.forEach(function(g) {
+             html += '<tr>';
+             html += '<td><strong>' + g.genre + '</strong></td>';
+             html += '<td>' + g.count.toLocaleString() + '</td>';
+             html += '<td>$' + g.avg_price.toFixed(2) + '</td>';
+             html += '<td>' + g.avg_rating_score.toFixed(1) + '%</td>';
+             html += '<td>' + g.avg_owners.toLocaleString() + '</td>';
+             html += '<td>' + g.avg_playtime.toLocaleString() + ' min</td>';
+             html += '</tr>';
+         });
+         tbody.innerHTML = html;
+     }).catch(function(err) { console.error(err); });
+ </script>
+ {% endblock %}

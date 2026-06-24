@@ -1,0 +1,77 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="d-flex justify-content-between align-items-center mb-3">
+     <h4 class="mb-0">开发商洞察</h4>
+     <small class="text-muted">头部开发商游戏数量、市场影响与好评率分析</small>
+ </div>
+ 
+ <div class="row g-3">
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">开发商游戏数量 Top 20</div>
+             <div class="chart-container" id="chart-dev-bar"></div>
+         </div>
+     </div>
+     <div class="col-md-6">
+         <div class="chart-card">
+             <div class="chart-title">开发商游戏数量 vs 好评率</div>
+             <div class="chart-container" id="chart-dev-rating"></div>
+         </div>
+     </div>
+     <div class="col-md-12">
+         <div class="chart-card">
+             <div class="chart-title">开发商排行数据表</div>
+             <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                 <table class="table table-sm table-hover game-table mb-0">
+                     <thead>
+                         <tr>
+                             <th>排名</th>
+                             <th>开发商</th>
+                             <th>游戏数量</th>
+                             <th>总好评</th>
+                             <th>总差评</th>
+                             <th>好评率</th>
+                             <th>平均价格</th>
+                             <th>总拥有者</th>
+                         </tr>
+                     </thead>
+                     <tbody id="dev-table-body">
+                         <tr><td colspan="8" class="text-center text-muted py-4">加载中...</td></tr>
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+     </div>
+ </div>
+ {% endblock %}
+ 
+ {% block scripts %}
+ <script>
+     Promise.all([
+         fetch('/api/developers').then(function(r) { return r.json(); }),
+         fetch('/api/charts').then(function(r) { return r.json(); })
+     ]).then(function(responses) {
+         var devData = responses[0].data;
+         var charts = responses[1].data;
+ 
+         renderChart('chart-dev-bar', charts.developers.developer_bar);
+         renderChart('chart-dev-rating', charts.developers.developer_rating);
+ 
+         var tbody = document.getElementById('dev-table-body');
+         var html = '';
+         devData.top_developers.forEach(function(d, i) {
+             html += '<tr>';
+             html += '<td>' + (i+1) + '</td>';
+             html += '<td><strong>' + d.developer + '</strong></td>';
+             html += '<td>' + d.game_count + '</td>';
+             html += '<td>' + (d.total_positive || 0).toLocaleString() + '</td>';
+             html += '<td>' + (d.total_negative || 0).toLocaleString() + '</td>';
+             html += '<td>' + (d.pos_rate || 0).toFixed(1) + '%</td>';
+             html += '<td>$' + (d.avg_price || 0).toFixed(2) + '</td>';
+             html += '<td>' + (d.total_owners || 0).toLocaleString() + '</td>';
+             html += '</tr>';
+         });
+         tbody.innerHTML = html;
+     }).catch(function(err) { console.error(err); });
+ </script>
+ {% endblock %}
