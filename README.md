@@ -6,6 +6,40 @@
 
 ---
 
+
+## 复现步骤
+
+### 1. 克隆项目
+
+`ash
+git clone https://github.com/leon6657/steam-game-analysis-kaggle.git
+cd steam-game-analysis-kaggle
+`
+
+### 2. 安装依赖
+
+`ash
+pip install pandas numpy flask plotly
+`
+
+### 3. 运行
+
+`ash
+python run_server.py
+`
+
+首次启动会自动从 CSV 生成 SQLite 数据库并完成所有分析。等待输出 **分析就绪: 124637 条游戏数据** 后，浏览器打开 **http://127.0.0.1:5000**
+
+### 4. 重新生成数据库（可选）
+
+`ash
+# 删除数据库后重启，会自动重建
+Remove-Item data/processed/steam.db
+python run_server.py
+`
+
+---
+
 ## 数据来源
 
 本平台使用 Kaggle Steam Games Dataset（fronkongames 版本），包含 **125,854 条**原始 Steam 游戏记录。数据涵盖 14 个核心字段：
