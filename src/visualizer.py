@@ -17,19 +17,30 @@ def _fig_to_json(fig):
 
 def _bar(x, y, title="", xl="", yl="", color=None):
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=x, y=y, marker_color=color or _COLORS[0],
-                         text=y, textposition="outside"))
+    fig.add_trace(go.Bar(x=x, y=y, marker_color=color or _COLORS[0]))
     fig.update_layout(template=_TEMPLATE, title=title,
                       xaxis_title=xl, yaxis_title=yl,
                       margin=dict(l=40, r=20, t=40, b=60), height=400)
+    fig.update_xaxes(tickangle=-45)
+    fig.update_yaxes(tickformat=",")
     return _fig_to_json(fig)
 
 
 def _pie(labels, values, title=""):
+    if len(labels) > 6:
+        top = 6
+        top_labels = list(labels[:top])
+        top_values = list(values[:top])
+        top_labels.append("Other")
+        top_values.append(sum(values[top:]))
+        labels = top_labels
+        values = top_values
     fig = go.Figure(data=[go.Pie(labels=labels, values=values,
-                                  textinfo="label+percent")])
+                                  textinfo="label+percent",
+                                  textfont=dict(size=11))])
     fig.update_layout(template=_TEMPLATE, title=title,
-                      margin=dict(l=20, r=20, t=40, b=20), height=400)
+                      margin=dict(l=10, r=10, t=40, b=10), height=400,
+                      showlegend=False)
     return _fig_to_json(fig)
 
 
@@ -43,10 +54,11 @@ def _line(df, x, y, color, title="", xl="", yl=""):
 
 def _heatmap(z, x, y, title=""):
     fig = go.Figure(data=go.Heatmap(z=z, x=x, y=y,
-                                     colorscale="RdBu_r", zmid=0,
-                                     text=z, texttemplate="%{text}"))
+                                     colorscale="YlOrRd",
+                                     text=z, texttemplate="%{text}",
+                                     textfont=dict(color="black", size=9)))
     fig.update_layout(template=_TEMPLATE, title=title,
-                      margin=dict(l=80, r=20, t=40, b=80), height=500)
+                      margin=dict(l=100, r=20, t=40, b=100), height=500)
     return _fig_to_json(fig)
 
 
@@ -67,15 +79,17 @@ def price_dist_bar(data):
 
 
 def price_rating_scatter(df):
-    sample = df.sample(min(2000, len(df)))
+    sample = df[df["price"] <= 20].sample(min(1500, len(df)))
     fig = px.scatter(sample, x="price", y="rating_score",
                      color="rating_score", size="owners",
-                     hover_name="name", color_continuous_scale="Viridis",
+                     hover_name="name", color_continuous_scale="RdBu_r",
                      template=_TEMPLATE,
                      title="价格 vs 好评率 (气泡大小=拥有者数)",
                      labels={"price": "价格 ($)", "rating_score": "好评率 (%)"},
-                     opacity=0.6)
-    fig.update_layout(margin=dict(l=40, r=20, t=40, b=40), height=450)
+                     opacity=0.8, size_max=45)
+    fig.update_xaxes(range=[0, 20], dtick=5)
+    fig.update_yaxes(range=[0, 100], dtick=20)
+    fig.update_layout(margin=dict(l=50, r=20, t=40, b=60), height=420)
     return _fig_to_json(fig)
 
 
@@ -93,8 +107,17 @@ def genre_trend_chart(data):
 
 
 def developer_bar(data):
-    return _bar([r["developer"] for r in data], [r["game_count"] for r in data],
-                "开发商 Top 20", "开发商", "游戏数量", _COLORS[4])
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=[r["developer"] for r in data],
+                         y=[r["game_count"] for r in data],
+                         marker_color=_COLORS[4]))
+    fig.update_layout(template=_TEMPLATE,
+                      title="开发商 Top 20",
+                      xaxis_title="开发商",
+                      yaxis=dict(title="游戏数量", tickformat=","),
+                      margin=dict(l=60, r=20, t=40, b=150), height=450)
+    fig.update_xaxes(tickangle=-45)
+    return _fig_to_json(fig)
 
 
 def developer_rating_chart(data):
@@ -109,10 +132,13 @@ def developer_rating_chart(data):
     fig.update_layout(template=_TEMPLATE,
                       title="开发商游戏数量 vs 好评率",
                       xaxis_title="开发商",
-                      yaxis_title="游戏数量",
+                      yaxis=dict(title="游戏数量", tickformat=","),
                       yaxis2=dict(overlaying="y", side="right",
-                                  title="好评率 (%)", range=[0, 105]),
-                      margin=dict(l=40, r=40, t=40, b=120), height=450)
+                                  title="好评率 (%)", range=[0, 105],
+                                  tickformat=".0f",
+                                  ticksuffix="%"),
+                      margin=dict(l=50, r=50, t=30, b=150), height=450)
+    fig.update_xaxes(tickangle=-45)
     return _fig_to_json(fig)
 
 

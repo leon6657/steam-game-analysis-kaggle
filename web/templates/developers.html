@@ -25,18 +25,17 @@
                  <table class="table table-sm table-hover game-table mb-0">
                      <thead>
                          <tr>
-                             <th>排名</th>
-                             <th>开发商</th>
-                             <th>游戏数量</th>
-                             <th>总好评</th>
-                             <th>总差评</th>
-                             <th>好评率</th>
-                             <th>平均价格</th>
-                             <th>总拥有者</th>
+                             <th style="white-space:nowrap">排名</th>
+                             <th style="white-space:nowrap">开发商</th>
+                             <th style="white-space:nowrap">游戏数量</th>
+                             <th style="white-space:nowrap">总好评</th>
+                             <th style="white-space:nowrap">好评率</th>
+                             <th style="white-space:nowrap">平均价格</th>
+                             <th style="white-space:nowrap">总拥有者</th>
                          </tr>
                      </thead>
                      <tbody id="dev-table-body">
-                         <tr><td colspan="8" class="text-center text-muted py-4">加载中...</td></tr>
+                         <tr><td colspan="7" class="text-center text-muted py-4">加载中...</td></tr>
                      </tbody>
                  </table>
              </div>
@@ -46,32 +45,47 @@
  {% endblock %}
  
  {% block scripts %}
- <script>
-     Promise.all([
-         fetch('/api/developers').then(function(r) { return r.json(); }),
-         fetch('/api/charts').then(function(r) { return r.json(); })
-     ]).then(function(responses) {
-         var devData = responses[0].data;
-         var charts = responses[1].data;
- 
-         renderChart('chart-dev-bar', charts.developers.developer_bar);
-         renderChart('chart-dev-rating', charts.developers.developer_rating);
- 
-         var tbody = document.getElementById('dev-table-body');
-         var html = '';
-         devData.top_developers.forEach(function(d, i) {
-             html += '<tr>';
-             html += '<td>' + (i+1) + '</td>';
-             html += '<td><strong>' + d.developer + '</strong></td>';
-             html += '<td>' + d.game_count + '</td>';
-             html += '<td>' + (d.total_positive || 0).toLocaleString() + '</td>';
-             html += '<td>' + (d.total_negative || 0).toLocaleString() + '</td>';
-             html += '<td>' + (d.pos_rate || 0).toFixed(1) + '%</td>';
-             html += '<td>$' + (d.avg_price || 0).toFixed(2) + '</td>';
-             html += '<td>' + (d.total_owners || 0).toLocaleString() + '</td>';
-             html += '</tr>';
-         });
-         tbody.innerHTML = html;
-     }).catch(function(err) { console.error(err); });
- </script>
+<script>
+    // 独立加载两个 API，互不影响
+    function loadDevData() {
+        var tbody = document.getElementById('dev-table-body');
+        fetch('/api/developers').then(function(r) { return r.json(); }).then(function(res) {
+            if (!res.success || !res.data || !res.data.top_developers) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">数据加载失败</td></tr>';
+                return;
+            }
+            var devData = res.data;
+            var html = '';
+            devData.top_developers.forEach(function(d, i) {
+                html += '<tr>';
+                html += '<td>' + (i+1) + '</td>';
+                html += '<td><strong>' + d.developer + '</strong></td>';
+                html += '<td>' + d.game_count + '</td>';
+                html += '<td>' + (d.total_positive || 0).toLocaleString() + '</td>';
+                html += '<td>' + (d.pos_rate || 0).toFixed(1) + '%</td>';
+                html += '<td>$' + (d.avg_price || 0).toFixed(2) + '</td>';
+                html += '<td>' + (d.total_owners || 0).toLocaleString() + '</td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }).catch(function(err) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">加载失败: ' + err.message + '</td></tr>';
+            console.error(err);
+        });
+    }
+
+    function loadDevCharts() {
+        fetch('/api/charts').then(function(r) { return r.json(); }).then(function(res) {
+            if (!res.success || !res.data || !res.data.developers) return;
+            var devCharts = res.data.developers;
+            renderChart('chart-dev-bar', devCharts.developer_bar);
+            renderChart('chart-dev-rating', devCharts.developer_rating);
+        }).catch(function(err) {
+            console.error(err);
+        });
+    }
+
+    loadDevData();
+    loadDevCharts();
+</script>
  {% endblock %}

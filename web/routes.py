@@ -17,6 +17,7 @@ bp = Blueprint("main", __name__)
 _analyzer = None
 _charts = None
 _df = None
+_dev_data = None
 
 
 def _get_db_path():
@@ -31,6 +32,7 @@ def _get_csv_path():
 
 def init_app():
     global _analyzer, _charts, _df
+    global _dev_data
     csv_path = _get_csv_path()
     db_path = _get_db_path()
 
@@ -54,6 +56,7 @@ def init_app():
 
     _analyzer = SteamAnalyzer(_df)
     _charts = all_charts(_analyzer)
+    _dev_data = _analyzer.developer_analysis(top_n=20)
     print(f"[routes] 分析就绪: {len(_df)} 条游戏数据")
 
 
@@ -119,50 +122,34 @@ def api_overview():
 
 @bp.route("/api/games")
 def api_games():
-    df = _get_df()
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 50, type=int)
     search = request.args.get("search", "").strip().lower()
     genre_filter = request.args.get("genre", "").strip()
     price_min = request.args.get("price_min", type=float)
     price_max = request.args.get("price_max", type=float)
-
-    filtered = df.copy()
+    db_path = _get_db_path()
+    conn = sqlite3.connect(db_path)
+    conds, vals = [], []
     if search:
-        filtered = filtered[filtered["name"].str.lower().str.contains(search, na=False)]
+        conds.append("LOWER(name) LIKE ?")
+        vals.append("%" + search + "%")
     if genre_filter:
-        filtered = filtered[filtered["genres"].str.contains(genre_filter, na=False)]
+        conds.append("genres LIKE ?")
+        vals.append("%" + genre_filter + "%")
     if price_min is not None:
-        filtered = filtered[filtered["price"] >= price_min]
+        conds.append("price >= ?")
+        vals.append(price_min)
     if price_max is not None:
-        filtered = filtered[filtered["price"] <= price_max]
-
-    total = len(filtered)
-    start = (page - 1) * per_page
-    end = start + per_page
-    page_data = filtered.iloc[start:end]
-
-    cols = ["app_id", "name", "release_date", "price", "positive_ratings",
-            "negative_ratings", "rating_score", "average_playtime",
-            "median_playtime", "owners", "developer", "publisher",
-            "genres", "platforms", "metacritic_score"]
-    cols = [c for c in cols if c in page_data.columns]
-    records = page_data[cols].to_dict("records")
-    for r in records:
-        for k, v in r.items():
-            if isinstance(v, (pd.Timestamp,)):
-                r[k] = str(v.date())
-            elif isinstance(v, float):
-                r[k] = round(v, 2)
-            elif pd.isna(v):
-                r[k] = None
-
-    return jsonify({"success": True, "data": {
-        "records": records, "total": total, "page": page,
-        "per_page": per_page,
-        "total_pages": (total + per_page - 1) // per_page,
-    }})
-
+        conds.append("price <= ?")
+        vals.append(price_max)
+    where = " AND ".join(conds) if conds else "1=1"
+    total = conn.execute("SELECT COUNT(*) FROM steam_games WHERE " + where, vals).fetchone()[0]
+    cols = ["app_id","name","release_date","price","positive_ratings","negative_ratings","rating_score","average_playtime","owners","developer","publisher","genres","platforms","metacritic_score"]
+    rows = conn.execute("SELECT " + ", ".join(cols) + " FROM steam_games WHERE " + where + " ORDER BY name LIMIT ? OFFSET ?", vals + [per_page, (page-1)*per_page]).fetchall()
+    conn.close()
+    records = [{cols[i]: row[i] for i in range(len(cols))} for row in rows]
+    return jsonify({"success":True,"data":{"records":records,"total":total,"page":page,"per_page":per_page,"total_pages":(total+per_page-1)//per_page}})
 
 @bp.route("/api/games/<int:app_id>")
 def api_game_detail(app_id):
@@ -188,9 +175,8 @@ def api_genres():
 
 @bp.route("/api/developers")
 def api_developers():
-    top_n = request.args.get("top_n", 20, type=int)
-    return jsonify({"success": True,
-                    "data": _get_analyzer().developer_analysis(top_n=top_n)})
+    global _dev_data
+    return jsonify({"success": True, "data": _dev_data})
 
 
 @bp.route("/api/price")

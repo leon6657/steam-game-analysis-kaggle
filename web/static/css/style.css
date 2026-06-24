@@ -79,14 +79,15 @@
  .game-table {
      font-size: 0.875rem;
  }
- .game-table th {
-     background: #f8f9fa;
-     position: sticky;
-     top: 0;
-     z-index: 1;
- }
- .game-table .rating-bar {
-     height: 6px;
+.game-table th {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+}
+.game-table .rating-bar {
+    height: 6px;
      border-radius: 3px;
      background: #e9ecef;
      overflow: hidden;
@@ -102,38 +103,57 @@
  }
  
  /* 筛选面板 */
- .filter-panel {
-     background: #fff;
-     border-radius: var(--card-radius);
-     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-     padding: 1rem 1.25rem;
-     margin-bottom: 1rem;
- }
- 
- /* 响应式调整 */
- @media (max-width: 768px) {
-     .kpi-card .kpi-value {
-         font-size: 1.25rem;
-     }
-     .container-fluid {
-         padding-left: 0.75rem;
-         padding-right: 0.75rem;
-     }
- }
- 
- /* 游戏详情弹窗 */
- .detail-label {
+.filter-panel {
+    background: #fff;
+    border-radius: var(--card-radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    white-space: nowrap;
+}
+
+.filter-panel .form-label,
+.filter-panel label {
+    white-space: nowrap;
+}
+
+#result-count,
+.pagination-info {
+    white-space: nowrap;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .kpi-card .kpi-value {
+        font-size: 1.25rem;
+    }
+    .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    .filter-panel {
+        white-space: normal;
+    }
+    .filter-panel .form-label,
+    .filter-panel label {
+        white-space: normal;
+    }
+}
+
+/* 游戏详情弹窗 */
+.detail-label {
      font-size: 0.75rem;
      color: #6c757d;
      text-transform: uppercase;
      letter-spacing: 0.3px;
  }
- .detail-value {
-     font-size: 1rem;
-     font-weight: 500;
- }
- 
- /* 滚动条美化 */
+.detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* 滚动条美化 */
  ::-webkit-scrollbar { width: 6px; }
  ::-webkit-scrollbar-track { background: transparent; }
  ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
@@ -151,13 +171,15 @@
      font-weight: 700;
      font-size: 1.75rem;
  }
- .welcome-section p {
-     opacity: 0.85;
-     margin-bottom: 0;
- }
- 
- /* 分页控件 */
- .pagination-info {
-     font-size: 0.85rem;
-     color: #6c757d;
- }
+.welcome-section p {
+    opacity: 0.85;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* 分页控件 */
+.pagination-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+}

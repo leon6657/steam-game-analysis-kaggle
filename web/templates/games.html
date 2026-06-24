@@ -39,7 +39,7 @@
              <tr>
                  <th>名称</th>
                  <th>价格</th>
-                 <th>好评率</th>
+                <th>好评数</th>
                  <th>类型</th>
                  <th>开发商</th>
                  <th>游玩时长</th>
@@ -53,12 +53,19 @@
  </div>
  
  <!-- 分页 -->
- <div class="d-flex justify-content-between align-items-center mt-2">
-     <div class="pagination-info" id="pagination-info"></div>
-     <nav>
-         <ul class="pagination pagination-sm mb-0" id="pagination-controls"></ul>
-     </nav>
- </div>
+<div class="d-flex justify-content-between align-items-center mt-2">
+    <div class="pagination-info" id="pagination-info"></div>
+    <div class="d-flex align-items-center">
+        <nav>
+            <ul class="pagination pagination-sm mb-0" id="pagination-controls"></ul>
+        </nav>
+        <div class="d-flex align-items-center gap-1 ms-2">
+            <label class="small text-muted mb-0">跳至</label>
+            <input type="number" class="form-control form-control-sm" id="page-jump-input" style="width:65px;text-align:center" min="1" value="1">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadGames(Math.max(1,parseInt(document.getElementById('page-jump-input').value)||1))">跳转</button>
+        </div>
+    </div>
+</div>
  
  <!-- 详情弹窗 -->
  <div class="modal fade" id="detailModal" tabindex="-1">
@@ -125,8 +132,8 @@
                  try { var parsed = JSON.parse(g.genres); genres = parsed.join(', '); } catch(e) { genres = g.genres || ''; }
                  html += '<tr onclick="showDetail(' + g.app_id + ')">';
                  html += '<td><strong>' + (g.name || '') + '</strong></td>';
-                 html += '<td>' + (g.price === 0 ? '免费' : '$' + g.price.toFixed(2)) + '</td>';
-                 html += '<td><div class="d-flex align-items-center gap-2"><span>' + posPct + '%</span><div class="rating-bar flex-grow-1"><div class="fill" style="width:' + posPct + '%"></div></div></div></td>';
+                html += '<td>' + (g.price === 0 ? '免费' : '$' + g.price.toFixed(2)) + '</td>';
+                html += '<td>' + (g.positive_ratings || 0).toLocaleString() + '</td>';
                  html += '<td>' + genres + '</td>';
                  html += '<td>' + (g.developer || '') + '</td>';
                  html += '<td>' + (g.average_playtime || 0).toLocaleString() + ' min</td>';
@@ -138,7 +145,9 @@
              // 分页
              currentPage = data.page;
              var info = document.getElementById('pagination-info');
-             info.textContent = '第 ' + data.page + '/' + data.total_pages + ' 页';
+            info.textContent = '第 ' + data.page + '/' + data.total_pages + ' 页';
+            var ji = document.getElementById('page-jump-input');
+            if (ji) ji.value = data.page;
              var controls = document.getElementById('pagination-controls');
              var phtml = '';
              phtml += '<li class="page-item' + (data.page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" onclick="loadGames(' + (data.page - 1) + '); return false;">上一页</a></li>';
@@ -159,14 +168,12 @@
  
              document.getElementById('detail-body').innerHTML = '<div class="row g-3">' +
                  '<div class="col-6"><div class="detail-label">价格</div><div class="detail-value">' + (g.price === 0 ? '免费' : '$' + g.price.toFixed(2)) + '</div></div>' +
-                 '<div class="col-6"><div class="detail-label">好评率</div><div class="detail-value">' + posPct + '% (' + g.positive_ratings.toLocaleString() + ' 好评 / ' + g.negative_ratings.toLocaleString() + ' 差评)</div></div>' +
+                '<div class="col-6"><div class="detail-label">好评数</div><div class="detail-value">' + (g.positive_ratings || 0).toLocaleString() + '</div></div>' +
                  '<div class="col-6"><div class="detail-label">开发商</div><div class="detail-value">' + (g.developer || '-') + '</div></div>' +
                  '<div class="col-6"><div class="detail-label">发行商</div><div class="detail-value">' + (g.publisher || '-') + '</div></div>' +
                  '<div class="col-6"><div class="detail-label">类型</div><div class="detail-value">' + genres + '</div></div>' +
-                 '<div class="col-6"><div class="detail-label">平台</div><div class="detail-value">' + (g.platforms || '-') + '</div></div>' +
                  '<div class="col-6"><div class="detail-label">平均游玩时长</div><div class="detail-value">' + (g.average_playtime || 0).toLocaleString() + ' 分钟</div></div>' +
                  '<div class="col-6"><div class="detail-label">拥有者估算</div><div class="detail-value">' + (g.owners || 0).toLocaleString() + '</div></div>' +
-                 '<div class="col-6"><div class="detail-label">Metacritic</div><div class="detail-value">' + (g.metacritic_score || '-') + '</div></div>' +
                  '<div class="col-6"><div class="detail-label">发行日期</div><div class="detail-value">' + (g.release_date || '-') + '</div></div>' +
                  '</div>';
              var modal = new bootstrap.Modal(document.getElementById('detailModal'));
@@ -181,3 +188,6 @@
      loadGames(1);
  </script>
  {% endblock %}
+    document.getElementById('page-jump-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') loadGames(Math.max(1,parseInt(e.target.value)||1));
+    });

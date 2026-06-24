@@ -124,9 +124,18 @@ class SteamAnalyzer:
         ).reset_index()
         dev_stats["total_ratings"] = dev_stats["total_positive"] + dev_stats["total_negative"]
         dev_stats["pos_rate"] = (
-            dev_stats["total_positive"] / dev_stats["total_ratings"].replace(0, pd.NA) * 100
+            dev_stats["total_positive"] / dev_stats["total_ratings"].replace(0, np.nan) * 100
         ).round(1)
+        dev_stats["pos_rate"] = dev_stats["pos_rate"].fillna(0)
         dev_stats = dev_stats.sort_values("game_count", ascending=False).head(top_n)
+        # 过滤掉 "Unknown" 开发商，让图表聚焦真实开发商
+        dev_stats = dev_stats[dev_stats["developer"] != "Unknown"]
+        dev_stats = dev_stats.head(15)
+        # 填充所有 NaN 为 0，避免 JSON 序列化输出 NaN
+        for col in ["game_count", "total_positive", "total_negative", "avg_price",
+                     "avg_rating_score", "total_owners", "pos_rate"]:
+            if col in dev_stats.columns:
+                dev_stats[col] = dev_stats[col].fillna(0)
         return {"top_developers": dev_stats.to_dict("records")}
 
     # ---- 5. 评价分析 ----
